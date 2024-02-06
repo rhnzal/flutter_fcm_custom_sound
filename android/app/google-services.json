@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "272521223069",
+    "project_id": "fcm-custom-sound",
+    "storage_bucket": "fcm-custom-sound.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:272521223069:android:d54903230eee715326ed74",
+        "android_client_info": {
+          "package_name": "com.example.flutter_fcm_custom_sound"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCuYd_Oor52Q1ztW1RaH2WBPoC49rxSmlc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

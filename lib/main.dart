@@ -1,33 +1,141 @@
+import 'dart:developer';
+
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'firebase_options.dart';
 import 'package:flutter/material.dart';
 
-void main() {
+
+// Flutter local notifications initialisation
+FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // You may set the permission requests to "provisional" which allows the user to choose what type
+  // of notifications they would like to receive once the user receives a notification.
+  final notificationSettings = await FirebaseMessaging.instance.requestPermission(provisional: true);
+
+  // For apple platforms, ensure the APNS token is available before making any FCM plugin API calls
+  final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+  if (apnsToken != null) {
+  // APNS token is available, make FCM plugin API requests...
+  }
+
+  FirebaseMessaging.instance.onTokenRefresh.listen((event) {
+    
+  }).onError((e) {
+    throw(e);
+  });
+
+  final fcmToken = await FirebaseMessaging.instance.getToken();
+  log(fcmToken.toString());
+
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+  NotificationSettings settings = await messaging.requestPermission(
+    alert: true,
+    sound: true,
+    criticalAlert: true,
+    badge: true
+  );
+
+  print('User granted permission: ${settings.authorizationStatus}');
+
+  // final DarwinInitializationSettings initializationSettingsDarwin =
+  //   DarwinInitializationSettings(
+  //     onDidReceiveLocalNotification: onDidReceiveLocalNotification
+  //   );
+
+  
+
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
   // This widget is the root of your application.
+  
+
+
+  // void onDidReceiveLocalNotification(
+  //   int id, 
+  //   String? title, 
+  //   String? body, 
+  //   String? payload
+  // ) async {
+  //   // display a dialog with the notification details, tap ok to go to another page
+  //   showDialog(
+  //     context: context,
+  //     builder: (BuildContext context) => CupertinoAlertDialog(
+  //       title: Text(title ?? ''),
+  //       content: Text(body ?? ''),
+  //       actions: [
+  //         CupertinoDialogAction(
+  //           isDefaultAction: true,
+  //           child: Text('Ok'),
+  //           onPressed: () async {
+  //             Navigator.of(context, rootNavigator: true).pop();
+  //             await Navigator.push(
+  //               context,
+  //               MaterialPageRoute(
+  //                 builder: (context) => MyHomePage(title: payload ?? 'Flutter Demo Home Page'),
+  //               ),
+  //             );
+  //           },
+  //         )
+  //       ],
+  //     ),
+  //   );
+  // }
+  
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    initial();
+  }
+
+  Future<void> initial() async {
+    AndroidInitializationSettings initializationSettingsAndroid = const AndroidInitializationSettings('app_icon');
+    final InitializationSettings initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+      // iOS: initializationSettingsDarwin,
+      // macOS: initializationSettingsDarwin,
+    );
+    await flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: onDidReceiveNotificationResponse
+    );
+  }
+
+  void onDidReceiveNotificationResponse(NotificationResponse notificationResponse) async {
+    final String? payload = notificationResponse.payload;
+    if (notificationResponse.payload != null) {
+      debugPrint('notification payload: $payload');
+    }
+    await Navigator.push(
+      context,
+      MaterialPageRoute<void>(builder: (context) => SecondScreen(payload: payload)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
@@ -39,14 +147,6 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
 
   final String title;
 
@@ -120,6 +220,26 @@ class _MyHomePageState extends State<MyHomePage> {
         tooltip: 'Increment',
         child: const Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+}
+
+class SecondScreen extends StatelessWidget {
+  final String? payload;
+  
+  const SecondScreen({this.payload = 'nothing' ,super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Second Screen'
+        ),
+      ),
+      body: Center(
+        child: Text(payload!),
+      ),
     );
   }
 }
